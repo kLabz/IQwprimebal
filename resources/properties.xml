@@ -2,21 +2,29 @@
     <properties>
         <property id="CP" type="number">250</property>
         <property id="WPRIME" type="number">20000</property>
+        <property id="RFTPW" type="number">340</property>
+        <property id="RWPRIME" type="number">10000</property>
         <property id="FORMULA" type="number">0</property>
         <property id="VALUE" type="number">0</property>
+        <property id="TTE" type="number">0</property>
     </properties>
 
     <strings>
        <string id="CP_title">CP (Watts)</string>
+       <string id="RFTPW_title">rFTPw (Watts)</string>
        <string id="WPRIME_title">W' (J)</string>
+       <string id="RWPRIME_title">Running W' (J)</string>
        <string id="FORMULA_title">Compute method (default: Integral)</string>
        <string id="INTEGRAL_title">Integral</string>
        <string id="DIFFERENTIAL_title">Differential</string>
        <string id="VALUE_title">Display units</string>
        <string id="PERCENT_title">%</string>
        <string id="KJ_title">kJ</string>
-    	   <string id="field_label">W' Bal</string>
+       <string id="field_label">W' Bal</string>
        <string id="field_units">kJ</string>
+       <string id="TTE_title">TTE</string>
+       <string id="TTE_disabled">Disabled</string>
+       <string id="TTE_enabled">Enabled</string>
     </strings>
 
     <settings>
@@ -27,6 +35,15 @@
         <setting propertyKey="@Properties.WPRIME" title="@Strings.WPRIME_title">
             <settingConfig type="numeric" />
         </setting>
+        
+        <setting propertyKey="@Properties.RFTPW" title="@Strings.RFTPW_title">
+            <settingConfig type="numeric" />
+        </setting>
+        
+        <setting propertyKey="@Properties.RWPRIME" title="@Strings.RWPRIME_title">
+            <settingConfig type="numeric" />
+        </setting>
+        
         <setting propertyKey="@Properties.FORMULA" title="@Strings.FORMULA_title">
           <settingConfig type="list">
               <listEntry value="0">@Strings.INTEGRAL_title</listEntry>
@@ -37,6 +54,10 @@
         	<settingConfig type="list">
         		<listEntry value="0">@Strings.PERCENT_title</listEntry>
         		<listEntry value="1">@Strings.KJ_title</listEntry></settingConfig></setting>
+        <setting propertyKey="@Properties.TTE" title="@Strings.TTE_title">
+        	<settingConfig type="list">
+        		<listEntry value="0">@Strings.TTE_disabled</listEntry>
+        		<listEntry value="1">@Strings.TTE_enabled</listEntry></settingConfig></setting>
     </settings>
     
     <fitContributions>        
