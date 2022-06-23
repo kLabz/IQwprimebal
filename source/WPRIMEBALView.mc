@@ -1,4 +1,4 @@
-// W Prime Bal on Connect IQ / 2015 - 2016 Gregory Chanez
+// W Prime Bal on Connect IQ / 2015 - 2022 Gregory Chanez
 // Find details about this software on <www.nakan.ch> (french) or 
 // <www.trinakan.com> (english)
 // Enjoy your ride !
@@ -25,6 +25,7 @@ using Toybox.WatchUi as Ui;
 using Toybox.System as Sys;
 using Toybox.Application as App;
 using Toybox.FitContributor as Fit;
+using Toybox.UserProfile;
 
 class WPRIMEBALView extends Ui.SimpleDataField {
 
@@ -34,8 +35,14 @@ class WPRIMEBALView extends Ui.SimpleDataField {
 	var WPRIME;
 	var FORMULA;
 	var VALUE;
+	var TTE;
+	var SPORT;
 
 	// Variables
+	var rollingpwr = new [10];
+	var avgpwr = 0;
+	var remainsec;
+	var remainmin;
 	var wprimebalField = null;
 	var elapsedSec = 0;
 	var pwr = 0;
@@ -52,10 +59,32 @@ class WPRIMEBALView extends Ui.SimpleDataField {
     //! Set the label of the data field here.
     function initialize() {
         SimpleDataField.initialize();
-		CP = App.getApp().getProperty("CP").toNumber();
-		WPRIME = App.getApp().getProperty("WPRIME").toNumber();
-    		FORMULA = App.getApp().getProperty("FORMULA").toNumber();
-    		VALUE = App.getApp().getProperty("VALUE").toNumber();
+        // Get current sport profile
+        var SportProfile = UserProfile.getCurrentSport();
+		// IF SPORT IS RUNNING
+		if (SportProfile == 1) {
+			CP = App.getApp().getProperty("RFTPW").toNumber();
+			WPRIME = App.getApp().getProperty("RWPRIME").toNumber();
+			SPORT = "R";
+		}
+		
+        // IF SPORT IS CYCLING
+		else {
+			CP = App.getApp().getProperty("CP").toNumber();
+			WPRIME = App.getApp().getProperty("WPRIME").toNumber();
+			SPORT="C";
+		}
+		
+		// GLOBAL SETTINGS
+    	FORMULA = App.getApp().getProperty("FORMULA").toNumber();
+    	VALUE = App.getApp().getProperty("VALUE").toNumber();
+    	TTE = App.getApp().getProperty("TTE").toNumber();
+    	
+    	// Initialize the array of the last 10 seconds of power
+    	for(var i = 0; i < rollingpwr.size(); i++) {
+			rollingpwr[i] = 0;
+		}
+		
 		// If the formula is differential, initial value of w'bal is WPRIME.
 		if (FORMULA == 1) {
 			wprimebal = WPRIME;
@@ -77,8 +106,8 @@ class WPRIMEBALView extends Ui.SimpleDataField {
 			else {
 				label = "kJ W' Bal (diff)";
 			}
-    		}
-    		// Create the custom FIT data field we want to record.
+    	}
+    	// Create the custom FIT data field we want to record.
         wprimebalField = createField(
             "wprime_bal",
             WPRIME_BAL_FIELD_ID,
@@ -148,6 +177,19 @@ class WPRIMEBALView extends Ui.SimpleDataField {
 				wprimebal = WPRIME - output;
 			}
 			
+			// TTE: Add current value to 10 sec history
+			rollingpwr = rollingpwr.slice(1, 10);
+			rollingpwr.add(pwr);
+			
+			// TTE: Compute TTE
+    		for(var i = 0; i < rollingpwr.size(); i++) { avgpwr += rollingpwr[i]; }
+    		avgpwr = avgpwr/10;
+    		if (avgpwr - CP != 0) {
+				remainsec = wprimebal/(avgpwr - CP);
+			}
+			remainmin = Math.floor(remainsec/60);
+			remainsec = remainsec - (remainmin*60);
+			
 			if (VALUE == 0) {
 				// Compute a percentage from raw values
 				wprimebalpc = wprimebal * (100/WPRIME.toFloat());
@@ -161,13 +203,18 @@ class WPRIMEBALView extends Ui.SimpleDataField {
 		}
 		else {
 			// Initial display, before the the session is started
-			return CP + "|" + WPRIME;
-			Sys.println("Elapsed time: " + info.elapsedTime);
+			return SPORT + "|" + CP + "|" + WPRIME + "| TTE:" + TTE;
+			//Sys.println("Elapsed time: " + info.elapsedTime);
 		}
 
 		// For debug purposes on the simulator only
-		Sys.println("FORMULA: " + FORMULA + " - ELAPSED SEC: " + elapsedSec + " - POWER: " + pwr + " - WPRIMEBAL: " + wprimebal + " - TAULIVE: " + TAUlive);
+		//Sys.println("REMAIN: " + remainmin.format("%02d") + ":" + remainsec.format("%02d") + " - FORMULA: " + FORMULA + " - ELAPSED SEC: " + elapsedSec + " - POWER: " + pwr + " - WPRIMEBAL: " + wprimebal + " - TAULIVE: " + TAUlive);
 		
+		
+		// If TTE is enabled AND the power is higher than CP, then display TTE:
+		if ((TTE == 1) && (avgpwr > CP) && (wprimebal > 0)) {
+			return remainmin.format("%02d") + ":" + remainsec.format("%02d");
+		}
 		// Return the value to the watch
 		wprimebalField.setData(wprimebal/1000);
 		return wprimebalpc.format("%.1f");
