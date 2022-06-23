@@ -52,6 +52,12 @@
             <iq:product id="d2air"/>
             <iq:product id="fenix6spro"/>
             <iq:product id="enduro"/>
+            <iq:product id="fr255s"/>
+            <iq:product id="fr255sm"/>
+            <iq:product id="fr255"/>
+            <iq:product id="fr255m"/>
+            <iq:product id="edge1040"/>
+            <iq:product id="fr955"/>
         </iq:products>
         <iq:permissions>
             <iq:uses-permission id="Background"/>
