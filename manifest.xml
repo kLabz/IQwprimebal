@@ -61,6 +61,8 @@
             <iq:product id="fr265"/>
             <iq:product id="fr265s"/>
             <iq:product id="fr965"/>
+            <iq:product id="edge540"/>
+            <iq:product id="edge840"/>
         </iq:products>
         <iq:permissions>
             <iq:uses-permission id="Background"/>
