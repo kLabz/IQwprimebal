@@ -1,5 +1,5 @@
 // W Prime Bal on Connect IQ / 2015 - 2022 Gregory Chanez
-// Find details about this software on <www.nakan.ch> (french) or 
+// Find details about this software on <www.nakan.ch> (french) or
 // <www.trinakan.com> (english)
 // Enjoy your ride !
 // *
@@ -24,7 +24,7 @@
 using Toybox.Application as App;
 
 class WPRIMEBALApp extends App.AppBase {
-	
+
     function initialize() {
         AppBase.initialize();
     }

@@ -28,7 +28,8 @@ using Toybox.Application as App;
 using Toybox.AntPlus;
 using Toybox.UserProfile;
 
-class WPRIMEBALView extends Ui.SimpleDataField {
+class WPRIMEBALViewPct extends Ui.SimpleDataField {
+
 	// Constants
 	const WPRIME_BAL_FIELD_ID = 0;
 	var CP;
