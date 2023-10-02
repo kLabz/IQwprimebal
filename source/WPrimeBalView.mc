@@ -24,27 +24,26 @@
 using Toybox.WatchUi as Ui;
 using Toybox.System as Sys;
 using Toybox.Application as App;
-// using Toybox.FitContributor as Fit;
+using Toybox.FitContributor as Fit;
 using Toybox.AntPlus;
 using Toybox.UserProfile;
 
-class WPRIMEBALViewPct extends Ui.SimpleDataField {
-
+class WPrimeBalView extends Ui.SimpleDataField {
 	// Constants
 	const WPRIME_BAL_FIELD_ID = 0;
 	var CP;
 	var WPRIME;
 	var FORMULA;
-	var VALUE;
-	var TTE;
-	var SPORT;
+	var DISPLAY_UNIT;
+	var DISPLAY_TTE;
+	var DISPLAY_FIT;
 
 	// Variables
 	var rollingpwr = new [10];
 	var avgpwr = 0;
 	var remainsec;
 	var remainmin;
-	// var wprimebalField = null;
+	var wprimebalField = null;
 	var elapsedSec = 0;
 	var pwr = 0;
 	var powerValue;
@@ -63,32 +62,32 @@ class WPRIMEBALViewPct extends Ui.SimpleDataField {
     //! Set the label of the data field here.
     function initialize() {
         SimpleDataField.initialize();
+
         // Get current sport profile
         var SportProfile = UserProfile.getCurrentSport();
+
 		// IF SPORT IS RUNNING
 		if (SportProfile == 1) {
-			CP = App.getApp().getProperty("RFTPW").toNumber();
-			WPRIME = App.getApp().getProperty("RWPRIME").toNumber();
-			SPORT = "R";
-		}
-
+			CP = Defaults.getRunningCP(App.getApp().getProperty("RunningCP"));
+			WPRIME = Defaults.getRunningWPrime(App.getApp().getProperty("RWPrime")) * 1000;
         // IF SPORT IS CYCLING
-		else {
-			CP = 280; // App.getApp().getProperty("CP").toNumber();
-			WPRIME = 20000; //App.getApp().getProperty("WPRIME").toNumber();
-			SPORT="C";
+		} else {
+			CP = Defaults.getCriticalPower(App.getApp().getProperty("CriticalPower"));
+			WPRIME = Defaults.getWPrime(App.getApp().getProperty("WPrime")) * 1000;
 		}
 
 		// GLOBAL SETTINGS
-    	// FORMULA = App.getApp().getProperty("FORMULA").toNumber();
-    	// VALUE = App.getApp().getProperty("VALUE").toNumber();
-    	// TTE = App.getApp().getProperty("TTE").toNumber();
-    	FORMULA = 0;
-    	VALUE = 0;
-    	TTE = 0;
+		var formula = App.getApp().getProperty("Formula");
+    	FORMULA = formula == null ? 0 : formula.toNumber();
+		var displayUnit = App.getApp().getProperty("DisplayUnit");
+    	DISPLAY_UNIT = displayUnit == null ? 0 : displayUnit.toNumber();
+    	var displayTTE = App.getApp().getProperty("DisplayTTE");
+    	DISPLAY_TTE = displayTTE != null && displayTTE.toNumber() == 1;
+    	var displayFIT = App.getApp().getProperty("DisplayFIT");
+    	DISPLAY_FIT = displayFIT != null && displayFIT.toNumber() == 1;
 
     	// Initialize the array of the last 10 seconds of power
-    	for(var i = 0; i < rollingpwr.size(); i++) {
+    	for (var i = 0; i < rollingpwr.size(); i++) {
 			rollingpwr[i] = 0;
 		}
 
@@ -97,38 +96,22 @@ class WPRIMEBALViewPct extends Ui.SimpleDataField {
 			wprimebal = WPRIME;
 		}
 
-		// Change the field title with the compute method choosen
-		if (FORMULA == 0) {
-			if (VALUE == 0) {
-				// label = "% W' Bal (int)";
-				label = "W'bal %";
-			}
-			else {
-				// label = "kJ W' Bal (int)";
-				label = "W'bal";
-			}
-		}
-		else {
-			if (VALUE == 0) {
-				label = "% W' Bal (diff)";
-			}
-			else {
-				label = "kJ W' Bal (diff)";
-			}
-    	}
+		// Change the field title with the unit choosen
+		label = DISPLAY_UNIT == 0 ? "W'bal %" : "W'bal  kJ";
+
     	// Create the custom FIT data field we want to record.
-        // wprimebalField = createField(
-        //     "wprime_bal",
-        //     WPRIME_BAL_FIELD_ID,
-        //     Fit.DATA_TYPE_FLOAT,
-        //     {:mesgType=>Fit.MESG_TYPE_RECORD, :units=>"kJ"}
-        // );
-        // wprimebalField.setData(wprimebal/1000);
+		if (DISPLAY_FIT) {
+			wprimebalField = createField(
+				"wprime_bal",
+				WPRIME_BAL_FIELD_ID,
+				Fit.DATA_TYPE_FLOAT,
+				{:mesgType=>Fit.MESG_TYPE_RECORD, :units=>"kJ"}
+			);
+			wprimebalField.setData(wprimebal/1000);
+		}
 
 		// Initialize the AntPlus.BikePowerListener object
-		listener = new MyBikePower();
-
-		// Initialize the AntPlus.BikePower object with a listener
+		listener = new AntPlus.BikePowerListener();
 		bikePower = new AntPlus.BikePower(listener);
     }
 
@@ -140,34 +123,32 @@ class WPRIMEBALViewPct extends Ui.SimpleDataField {
 
         // Check if the activity is started or not
 		if (info.elapsedTime > 0) {
-
-			// Check if power is negative or null, and normalize it to 0.
-			var calculatedPower = bikePower.getCalculatedPower();
-			if (calculatedPower == null || calculatedPower.power == null || calculatedPower.power < 0) {
-				pwr = 0;
+			if (info has :currentPower) {
+				if (info.currentPower == null || info.currentPower < 0) {
+					pwr = 0;
+				} else {
+					pwr = info.currentPower;
+				}
 			} else {
-				pwr = calculatedPower.power;
+				var calculatedPower = bikePower.getCalculatedPower();
+				if (calculatedPower == null || calculatedPower.power == null || calculatedPower.power < 0) {
+					pwr = 0;
+				} else {
+					pwr = calculatedPower.power;
+				}
 			}
 
 			// Method by differential equation Froncioni / Clarke
 			if (FORMULA == 1) {
 				if (pwr < CP) {
 				  	wprimebal = wprimebal + (CP-pwr)*(WPRIME-wprimebal)/WPRIME.toFloat();
-				}
-				else {
+				} else {
 					wprimebal = wprimebal + (CP-pwr);
 				}
-			}
-
 			// Method by integral formula Skiba et al
-			else {
-				// powerValue
-				if (pwr > CP) {
-					powerValue = (pwr - CP);
-				}
-				else {
-					powerValue = 0;
-				}
+			} else {
+				powerValue = (pwr > CP) ? (pwr - CP) : 0;
+
 				// Compute TAU
 				if (pwr < CP) {
 					totalBelowCP += pwr;
@@ -175,8 +156,7 @@ class WPRIMEBALViewPct extends Ui.SimpleDataField {
 				}
 				if (countBelowCP > 0) {
 					TAUlive = 546.00 * Math.pow(Math.E, -0.01*(CP - (totalBelowCP/countBelowCP))) + 316;
-	  			}
-				else {
+	  			} else {
 					TAUlive = 546 * Math.pow(Math.E, -0.01*(CP)) + 316;
 				}
 
@@ -191,7 +171,7 @@ class WPRIMEBALViewPct extends Ui.SimpleDataField {
 			rollingpwr.add(pwr);
 
 			// TTE: Compute TTE
-    		for(var i = 0; i < rollingpwr.size(); i++) { avgpwr += rollingpwr[i]; }
+    		for (var i = 0; i < rollingpwr.size(); i++) { avgpwr += rollingpwr[i]; }
     		avgpwr = avgpwr/10;
     		if (avgpwr - CP != 0) {
 				remainsec = wprimebal/(avgpwr - CP);
@@ -199,33 +179,32 @@ class WPRIMEBALViewPct extends Ui.SimpleDataField {
 			remainmin = Math.floor(remainsec/60);
 			remainsec = remainsec - (remainmin*60);
 
-			if (VALUE == 0) {
+			if (DISPLAY_UNIT == 0) {
 				// Compute a percentage from raw values
 				wprimebalpc = wprimebal * (100/WPRIME.toFloat());
-			}
-			else {
+			} else {
 				wprimebalpc = wprimebal/1000;
 			}
 
-			// One more second in life...
 			elapsedSec++;
-		}
-		else {
+		} else {
 			// Initial display, before the the session is started
-			return SPORT + "|" + CP + "|" + WPRIME + "| TTE:" + TTE;
-			//Sys.println("Elapsed time: " + info.elapsedTime);
+			return (DISPLAY_UNIT == 0 ? wprimebalpc : WPRIME/1000).format("%.1f");
 		}
 
 		// For debug purposes on the simulator only
 		//Sys.println("REMAIN: " + remainmin.format("%02d") + ":" + remainsec.format("%02d") + " - FORMULA: " + FORMULA + " - ELAPSED SEC: " + elapsedSec + " - POWER: " + pwr + " - WPRIMEBAL: " + wprimebal + " - TAULIVE: " + TAUlive);
 
-
 		// If TTE is enabled AND the power is higher than CP, then display TTE:
-		if ((TTE == 1) && (avgpwr > CP) && (wprimebal > 0)) {
+		if (DISPLAY_TTE && (avgpwr > CP) && (wprimebal > 0)) {
 			return remainmin.format("%02d") + ":" + remainsec.format("%02d");
 		}
+
+		if (DISPLAY_FIT) {
+			wprimebalField.setData(wprimebal/1000);
+		}
+
 		// Return the value to the watch
-		// wprimebalField.setData(wprimebal/1000);
 		return wprimebalpc.format("%.1f");
     }
 }

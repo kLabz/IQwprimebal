@@ -1,3 +1,15 @@
 <strings>
-    <string id="AppName">WPRIMEBAL</string>
+    <string id="AppName">WPrimeBal</string>
+    <string id="CriticalPower">CP (W)</string>
+    <string id="WPrime">W' (kJ)</string>
+    <string id="RunningCP">Run CP (W)</string>
+    <string id="RunningWPrime">Run W' (kJ)</string>
+    <string id="Formula">Formula</string>
+    <string id="Integral">Integral</string>
+    <string id="Differential">Differential</string>
+    <string id="DisplayUnit">Display unit</string>
+    <string id="UnitPercent">%</string>
+    <string id="UnitKJ">kJ</string>
+    <string id="DisplayTTE">Display TTE</string>
+    <string id="WriteFIT">Write to FIT</string>
 </strings>

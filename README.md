@@ -1,4 +1,5 @@
-# IQwprimebal
-Garmin Connect IQ Wprime Bal application
+# WPrimeBal
 
-This app is published on Garmin Connect IQ App Store: https://apps.garmin.com/en-US/apps/6dcfffe5-cd3d-41f3-8ba3-13fa0647b003
+Garmin Connect IQ W'bal application
+
+~~This app is published on Garmin Connect IQ App Store: TODO~~

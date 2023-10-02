@@ -23,7 +23,7 @@
 
 using Toybox.Application as App;
 
-class WPRIMEBALApp extends App.AppBase {
+class WPrimeBal extends App.AppBase {
 
     function initialize() {
         AppBase.initialize();
@@ -39,7 +39,10 @@ class WPRIMEBALApp extends App.AppBase {
 
     //! Return the initial view of your application here
     function getInitialView() {
-        return [ new WPRIMEBALView() ];
+        return [ new WPrimeBalView() ];
     }
 
+	function getSettingsView() {
+		return [new AppSettingsView(), new AppSettingsDelegate()];
+	}
 }

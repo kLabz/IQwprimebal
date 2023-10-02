@@ -1,0 +1,5 @@
+bin/mir/**
+bin/internal-mir/**
+bin/gen/**
+bin/WPrimeBal.prg.debug.xml
+developer_key.*
